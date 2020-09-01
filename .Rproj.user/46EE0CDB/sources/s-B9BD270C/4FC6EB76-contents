@@ -1,0 +1,56 @@
+# Library
+library(covid19.analytics)
+library(dplyr)
+
+library(lubridate)
+library(ggplot2)
+library(tidyverse)
+library(gganimate)
+library(av)
+library(gifski)
+# Data
+a=(covid19.data(case = "ts-confirmed"))
+a=subset(a,Country.Region == 'Spain')
+a
+tsc <- covid19.data(case = 'ts-confirmed')
+tsc <- tsc %>% filter(Country.Region == 'Spain')
+tsc <- data.frame(t(tsc))
+tsc <- cbind(rownames(tsc), data.frame(tsc, row.names = NULL))
+colnames(tsc) <- c('Date', 'Confirmed')
+tsc$Date <- ymd(tsc$Date)
+tsc$Confirmed <- as.numeric(tsc$Confirmed)
+tsc<-na.omit(tsc)
+tsc<-tsc[-(1:33),]
+# Plot
+qplot(Date, Confirmed, data = tsc)
+
+a=ggplot(tsc,aes(x=Date,y=Confirmed))+geom_point()+geom_line()+geom_area(fill="red")+geom_area(fill="red")+labs(title.position="bottom",title="Casos confirmados acumulados de COVID-19 en España",subtitle = "Desde 24 de febrero hasta 29 de mayo ",
+                                                                                                                caption = "Fuente de los datos: Paquete de R COVID19.Analytics", x="Fecha", y="Número nuevos casos confirmados")+theme(plot.title=element_text(size=15, face="bold", hjust = 0.5))+theme(
+  plot.background = element_blank(),
+  panel.grid.major = element_blank(),
+  panel.grid.minor = element_blank())
+
+a
+p=a + transition_reveal(Date)
+p
+animate(p, duration = 20)
+
+anim_save("tsc")
+tsc_d=diff(as.xts(x=tsc$Confirmed, order.by = tsc$Date))[-1]
+
+tsc_d=data.frame(ymd(tsc$Date[-1]), coredata(tsc_d))
+colnames(tsc_d)=c("Date","Daily_Confirmed")
+tsc_d
+a1=ggplot(as.data.frame(tsc_d),aes(x=Date  ,y=Daily_Confirmed))+geom_point()+geom_line()+geom_area(fill="red")+labs(title.position="bottom",title="Nuevos casos confirmados diarios de COVID-19 en España",subtitle = "Desde 24 de febrero hasta 29 de mayo ",
+                                                                                                                    caption = "Fuente de los datos: Paquete de R COVID19.Analytics", x="Fecha", y="Número nuevos casos confirmados")+theme(plot.title=element_text(size=15, face="bold", hjust = 0.5))+theme(
+  plot.background = element_blank(),
+  panel.grid.major = element_blank(),
+  panel.grid.minor = element_blank())
+
+a1
+
+
+pr=a1 + transition_reveal(Date)
+pr
+animate(pr, duration = 20)
+anim_save("tsc_d")
